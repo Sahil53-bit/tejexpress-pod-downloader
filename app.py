@@ -16,18 +16,21 @@ LOGIN_URL = "https://ltl-clients-api.delhivery.com/ums/login"
 POD_DOWNLOAD_URL = "https://ltl-clients-api.delhivery.com/document/download"
 
 # Ask user for folder location (default to Desktop)
-def get_save_folder():
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    folder_selected = filedialog.askdirectory(title="Select Folder to Save PODs")  
-    if not folder_selected:
-        # Default to Desktop if user cancels
-        folder_selected = os.path.join(os.path.expanduser("~"), "Desktop", "POD_Downloads")
-    os.makedirs(folder_selected, exist_ok=True)  # Ensure the folder exists
-    return folder_selected
+# def get_save_folder():
+#     root = tk.Tk()
+#     root.withdraw()  # Hide the main window
+#     folder_selected = filedialog.askdirectory(title="Select Folder to Save PODs")  
+#     if not folder_selected:
+#         # Default to Desktop if user cancels
+#         folder_selected = os.path.join(os.path.expanduser("~"), "Desktop", "POD_Downloads")
+#     os.makedirs(folder_selected, exist_ok=True)  # Ensure the folder exists
+#     return folder_selected
 
-# Get folder once at the start
-SAVE_FOLDER = get_save_folder()
+# # Get folder once at the start
+# SAVE_FOLDER = get_save_folder()
+SAVE_FOLDER = os.path.join(os.path.expanduser("~"), "Desktop", "POD_Downloads")
+os.makedirs(SAVE_FOLDER, exist_ok=True)  # Ensure the folder exists
+
 
 def get_auth_token():
     """Logs in to get JWT token."""
