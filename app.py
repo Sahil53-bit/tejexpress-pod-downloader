@@ -1,11 +1,8 @@
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, render_template
+import os
 import requests
 import pandas as pd
-import os
-import shutil
-import uuid
 
-# Flask App
 app = Flask(__name__)
 
 # API Credentials
@@ -16,9 +13,9 @@ PASSWORD = "Tejexp@2021"
 LOGIN_URL = "https://ltl-clients-api.delhivery.com/ums/login"
 POD_DOWNLOAD_URL = "https://ltl-clients-api.delhivery.com/document/download"
 
-# Folder for storing PODs
-SAVE_FOLDER = "POD_Documents"
-os.makedirs(SAVE_FOLDER, exist_ok=True)
+# Save Folder on Desktop
+DESKTOP_PATH = os.path.join(os.path.expanduser("~"), "Desktop", "Downloaded_PODs")
+os.makedirs(DESKTOP_PATH, exist_ok=True)  # Ensure the folder exists
 
 def get_auth_token():
     """Logs in to get JWT token."""
@@ -30,9 +27,9 @@ def get_auth_token():
         return None
 
 def pod_already_downloaded(new_file_name):
-    """Checks if the POD file already exists."""
-    jpg_path = os.path.join(SAVE_FOLDER, f"{new_file_name}.jpg")
-    pdf_path = os.path.join(SAVE_FOLDER, f"{new_file_name}.pdf")
+    """Checks if the POD file already exists on Desktop."""
+    jpg_path = os.path.join(DESKTOP_PATH, f"{new_file_name}.jpg")
+    pdf_path = os.path.join(DESKTOP_PATH, f"{new_file_name}.pdf")
     return os.path.exists(jpg_path) or os.path.exists(pdf_path)
 
 def download_pod(lr_number, new_file_name, auth_token):
@@ -50,14 +47,14 @@ def download_pod(lr_number, new_file_name, auth_token):
         if "data" in json_response and "files" in json_response["data"] and json_response["data"]["files"]:
             pod_url = json_response["data"]["files"][0]["url"]
             file_extension = ".jpg" if "jpg" in pod_url else ".pdf"
-            file_path = os.path.join(SAVE_FOLDER, f"{new_file_name}{file_extension}")
+            file_path = os.path.join(DESKTOP_PATH, f"{new_file_name}{file_extension}")
 
             # Download file
             pod_response = requests.get(pod_url)
             with open(file_path, "wb") as file:
                 file.write(pod_response.content)
 
-            print(f"✅ POD downloaded and saved as: {file_path}")
+            print(f"✅ POD downloaded and saved on Desktop: {file_path}")
             return file_path  # Return file path
     except Exception as e:
         print(f"❌ Error fetching POD for LR {lr_number}: {str(e)}")
@@ -69,7 +66,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """Handles Excel file upload, fetches PODs, and returns ZIP file."""
+    """Handles Excel file upload, fetches PODs, and returns success message."""
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -100,10 +97,10 @@ def upload_file():
             if pod_path:
                 file_paths.append(pod_path)
 
-        return jsonify({"message": "Process complete!"})
+        return jsonify({"message": "PODs downloaded successfully! Check your Desktop in 'Downloaded_PODs' folder."})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
