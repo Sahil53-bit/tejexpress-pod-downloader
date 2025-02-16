@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tej Express Services - POD Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .container {
+            width: 50%;
+            background: white;
+            padding: 20px;
+            margin: 50px auto;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        h2 {
+            color: #333;
+        }
+        .file-input {
+            padding: 10px;
+            border: 2px dashed #4CAF50;
+            background: #f9f9f9;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            width: 80%;
+        }
+        .file-input input {
+            display: none;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-top: 10px;
+            width: 80%;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .progress-container {
+            width: 80%;
+            background: #ddd;
+            border-radius: 5px;
+            margin: 20px auto;
+            height: 25px;
+            display: none;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 25px;
+            color: white;
+            border-radius: 5px;
+        }
+        #file-name {
+            font-size: 16px;
+            color: #333;
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        function showFileName() {
+            let fileInput = document.getElementById("fileInput");
+            let fileNameDisplay = document.getElementById("file-name");
+            
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.innerHTML = "📂 Selected File: " + fileInput.files[0].name;
+            } else {
+                fileNameDisplay.innerHTML = "";
+            }
+        }
+
+        function uploadFile() {
+            let formData = new FormData();
+            let fileInput = document.getElementById("fileInput");
+            let messageBox = document.getElementById("message");
+            let progressBarContainer = document.getElementById("progress-container");
+            let progressBar = document.getElementById("progress-bar");
+
+            if (!fileInput.files.length) {
+                messageBox.innerHTML = "❌ Please select a file!";
+                messageBox.style.color = "red";
+                return;
+            }
+
+            formData.append("file", fileInput.files[0]);
+
+            // Show progress bar
+            progressBarContainer.style.display = "block";
+            progressBar.style.width = "0%";
+            progressBar.innerHTML = "0%";
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    progressBar.style.width = "100%";
+                    progressBar.innerHTML = "100% Completed";
+                    messageBox.innerHTML = "✅ " + data.message;
+                    messageBox.style.color = "green";
+                } else {
+                    progressBarContainer.style.display = "none"; // Hide progress if error
+                    messageBox.innerHTML = "❌ Error: " + data.error;
+                    messageBox.style.color = "red";
+                }
+            })
+            .catch(error => {
+                progressBarContainer.style.display = "none";
+                messageBox.innerHTML = "❌ Upload failed!";
+                messageBox.style.color = "red";
+            });
+
+            // Simulate progress bar animation
+            let width = 0;
+            let interval = setInterval(() => {
+                if (width >= 90) {
+                    clearInterval(interval);
+                } else {
+                    width += 10;
+                    progressBar.style.width = width + "%";
+                    progressBar.innerHTML = width + "%";
+                }
+            }, 500);
+        }
+    </script>
+</head>
+<body>
+    <div class="header">🚛 Tej Express Services - POD Downloader</div>
+    <div class="container">
+        <h2>📦 Upload Excel & Download PODs</h2>
+        <label class="file-input">
+            <input type="file" id="fileInput" accept=".xlsx" onchange="showFileName()">
+            Click to Select Excel File
+        </label>
+        <p id="file-name"></p> <!-- Displays uploaded file name -->
+        <button onclick="uploadFile()">📤 Upload & Download PODs</button>
+        
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar">0%</div>
+        </div>
+        
+        <p class="message" id="message"></p>
+    </div>
+</body>
+</html>
